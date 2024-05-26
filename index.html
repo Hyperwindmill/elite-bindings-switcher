@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Elite Dangerous Bindings Switcher</title>
+  </head>
+  <body>
+    <h1>Elite Dangerous Bindings Switcher</h1>
+    <div>
+      <button id="list-backups">List Backups</button>
+      <ul id="backups-list"></ul>
+    </div>
+    <div>
+      <input type="text" id="backup-name" placeholder="Backup Name" />
+      <button id="backup">Backup</button>
+    </div>
+    <div>
+      <input type="text" id="restore-name" placeholder="Backup Name" />
+      <button id="restore">Restore</button>
+    </div>
+    <script>
+      const backupsList = document.getElementById("backups-list");
+
+      async function loadBackups() {
+        const backups = await window.api.list();
+        backupsList.innerHTML = "";
+        backups.forEach((backup) => {
+          const listItem = document.createElement("li");
+          listItem.textContent = backup;
+          backupsList.appendChild(listItem);
+        });
+      }
+
+      // Load backups on page load
+      window.onload = loadBackups;
+      document
+        .getElementById("list-backups")
+        .addEventListener("click", async () => {
+          loadBackups();
+        });
+
+      document.getElementById("backup").addEventListener("click", async () => {
+        const backupName = document.getElementById("backup-name").value;
+        const result = await window.api.backup(backupName);
+        if (result.success) {
+          alert("Backup completed");
+        } else {
+          alert(result.message);
+        }
+      });
+
+      document.getElementById("restore").addEventListener("click", async () => {
+        const backupName = document.getElementById("restore-name").value;
+        const result = await window.api.restore(backupName);
+        if (result.success) {
+          alert("Restore completed");
+        } else {
+          alert(result.message);
+        }
+      });
+    </script>
+  </body>
+</html>
