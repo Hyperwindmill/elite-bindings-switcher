@@ -19,7 +19,7 @@ const archivePath = path.join(
 );
 
 if (!process.env.STEAM_PATH) {
-  console.error("Errore: la variabile di ambiente STEAM_PATH non è impostata.");
+  console.error("Error: please set the STEAM_PATH environment variable.");
   process.exit(1);
 }
 
@@ -45,7 +45,7 @@ async function findBindingsPath() {
       return bindingsPath;
     }
   }
-  throw new Error("Directory dei bindings non trovata.");
+  throw new Error("Could not locate ED directory.");
 }
 
 // Funzione per eseguire il backup
@@ -53,26 +53,26 @@ async function backupBindings(bindingsPath, backupName) {
   const targetPath = path.join(archivePath, backupName);
   await fs.ensureDir(targetPath);
   await fs.copy(bindingsPath, targetPath);
-  console.log(`Bindings archiviati come '${backupName}'.`);
+  console.log(`Bindings saved as '${backupName}'.`);
 }
 
 // Funzione per ripristinare un backup
 async function restoreBindings(bindingsPath, backupName) {
   const sourcePath = path.join(archivePath, backupName);
   if (!(await fs.pathExists(sourcePath))) {
-    throw new Error(`Il backup '${backupName}' non esiste.`);
+    throw new Error(`backup '${backupName}' does not exist.`);
   }
   await fs.copy(sourcePath, bindingsPath);
-  console.log(`Bindings ripristinati da '${backupName}'.`);
+  console.log(`Bindings restored from '${backupName}'.`);
 }
 
 // Funzione per elencare i backup disponibili
 async function listBackups() {
   const backups = await fs.readdir(archivePath);
   if (backups.length === 0) {
-    console.log("Nessun backup disponibile.");
+    console.log("No backup available.");
   } else {
-    console.log("Backups disponibili:");
+    console.log("Backups available:");
     backups.forEach((backup) => console.log(backup));
   }
 }
@@ -87,13 +87,13 @@ async function listBackups() {
       {
         type: "list",
         name: "action",
-        message: "Cosa vuoi fare?",
+        message: "Select an action",
         choices: ["backup", "restore", "list"],
       },
       {
         type: "input",
         name: "backupName",
-        message: "Inserisci il nome del backup:",
+        message: "Insert backup name: ",
         when: (answers) => answers.action !== "list",
       },
     ]);
@@ -110,6 +110,6 @@ async function listBackups() {
         break;
     }
   } catch (error) {
-    console.error(`Errore: ${error.message}`);
+    console.error(`Error: ${error.message}`);
   }
 })();
