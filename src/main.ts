@@ -2,12 +2,11 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import fs from "fs-extra";
 import dotenv from "dotenv";
-import { fileURLToPath } from "url";
-
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+if (require("electron-squirrel-startup")) {
+  app.quit();
+}
 
 const steamPath = path.join(process.env.STEAM_PATH, "compatdata");
 const archivePath = path.join(
@@ -19,34 +18,48 @@ if (!process.env.STEAM_PATH) {
   console.error("Error: STEAM_PATH environment variable is not set.");
   process.exit(1);
 }
-
-function createWindow() {
-  const win = new BrowserWindow({
+const createWindow = () => {
+  // Create the browser window.
+  const mainWindow = new BrowserWindow({
     width: 800,
     height: 600,
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
-      contextIsolation: true,
-      enableRemoteModule: false,
     },
   });
 
-  win.loadFile("index.html");
-}
+  // and load the index.html of the app.
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
+    );
+  }
 
-app.whenReady().then(() => {
-  createWindow();
+  // Open the DevTools.
+  mainWindow.webContents.openDevTools();
+};
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
+// This method will be called when Electron has finished
+// initialization and is ready to create browser windows.
+// Some APIs can only be used after this event occurs.
+app.on("ready", createWindow);
 
+// Quit when all windows are closed, except on macOS. There, it's common
+// for applications and their menu bar to stay active until the user quits
+// explicitly with Cmd + Q.
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
+  }
+});
+
+app.on("activate", () => {
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
   }
 });
 
@@ -74,13 +87,13 @@ async function findBindingsPath() {
   throw new Error("Bindings directory not found.");
 }
 
-async function backupBindings(bindingsPath, backupName) {
+async function backupBindings(bindingsPath: string, backupName: string) {
   const targetPath = path.join(archivePath, backupName);
   await fs.ensureDir(targetPath);
   await fs.copy(bindingsPath, targetPath);
 }
 
-async function restoreBindings(bindingsPath, backupName) {
+async function restoreBindings(bindingsPath: string, backupName: string) {
   const sourcePath = path.join(archivePath, backupName);
   if (!(await fs.pathExists(sourcePath))) {
     throw new Error(`Backup '${backupName}' does not exist.`);
