@@ -116,6 +116,9 @@ async function listBackups() {
 ipcMain.handle("backup", async (event, backupName) => {
   try {
     const bindingsPath = await findBindingsPath();
+    console.log(
+      "Backing up current bindings from " + bindingsPath + " to " + backupName
+    );
     await backupBindings(bindingsPath, backupName);
     return { success: true };
   } catch (error) {
@@ -126,6 +129,9 @@ ipcMain.handle("backup", async (event, backupName) => {
 ipcMain.handle("restore", async (event, backupName) => {
   try {
     const bindingsPath = await findBindingsPath();
+    console.log(
+      "Restoring bindings from " + backupName + " to " + bindingsPath
+    );
     await restoreBindings(bindingsPath, backupName);
     return { success: true };
   } catch (error) {

@@ -13,6 +13,16 @@ export function BackupView(options: BVInput) {
       setBackups(res);
     });
   };
+  const restoreBackup = (backup: string) => {
+    options.service
+      .restore(backup)
+      .then(() => {
+        alert("Backup " + backup + " restored");
+      })
+      .catch((err) => {
+        alert("Error: " + err);
+      });
+  };
   useEffect(() => {
     loadBackups();
   }, []);
@@ -30,7 +40,11 @@ export function BackupView(options: BVInput) {
               {backup}
             </div>
             <div className="flex sm:flex-column align-items-center sm:align-items-end gap-3 sm:gap-2">
-              <Button className="p-button-rounded" label="Restore"></Button>
+              <Button
+                className="p-button-rounded"
+                label="Restore"
+                onClick={() => restoreBackup(backup)}
+              ></Button>
             </div>
           </div>
         </div>

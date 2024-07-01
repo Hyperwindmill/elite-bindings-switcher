@@ -8,18 +8,18 @@ export class BindingsService {
     //@ts-expect-error because of electron api
     const result = await window.api.backup(backupName);
     if (result.success) {
-      alert("Backup completed");
+      return true;
     } else {
-      alert(result.message);
+      throw result.message;
     }
   }
   async restore(backupName: string) {
     //@ts-expect-error because of electron api
     const result = await window.api.restore(backupName);
     if (result.success) {
-      alert("Restore completed");
+      return true;
     } else {
-      alert(result.message);
+      throw result.message;
     }
   }
 }
