@@ -2,7 +2,7 @@ export class BindingsService {
   async loadBackups() {
     //@ts-expect-error because of electron api
     const backups = await window.api.list();
-    return backups;
+    return backups as Array<string>;
   }
   async backup(backupName: string) {
     //@ts-expect-error because of electron api
