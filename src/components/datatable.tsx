@@ -15,7 +15,7 @@ interface LazyTableState {
   page?: number;
   sortField?: string;
   sortOrder?: SortOrder;
-  filters?: DataTableFilterMeta;
+  // filters?: DataTableFilterMeta;
 }
 interface LoaderFunction<T extends Record<string, any>> {
   (page: number, rows: number): Promise<{
@@ -41,16 +41,16 @@ export function GenericDataTable<T extends Record<string, any>>(
 ) {
   const [loading, setLoading] = useState<boolean>(false);
   const [totalRecords, setTotalRecords] = useState<number>(0);
-  const [selectAll, setSelectAll] = useState<boolean>(false);
+  // const [selectAll, setSelectAll] = useState<boolean>(false);
   const [records, setRecords] = useState<T[]>(null);
-  const [selectedRecords, setSelectedRecords] = useState<T[] | null>(null);
+  // const [selectedRecords, setSelectedRecords] = useState<T[] | null>(null);
   const [lazyState, setlazyState] = useState<LazyTableState>({
     first: 0,
     rows: 10,
     page: 1,
     sortField: null,
     sortOrder: null,
-    filters: null,
+    // filters: null,
   });
   useEffect(() => {
     loadLazyData();
@@ -78,7 +78,7 @@ export function GenericDataTable<T extends Record<string, any>>(
     setlazyState({ ...lazyState, ...event });
   };
 
-  const onSelectionChange = (event: any) => {
+  /* const onSelectionChange = (event: any) => {
     const value = event.value;
     setSelectedRecords(value);
     setSelectAll(value.length === totalRecords);
@@ -96,17 +96,17 @@ export function GenericDataTable<T extends Record<string, any>>(
       setSelectAll(false);
       setSelectedRecords([]);
     }
-  };
+  }; */
 
   return (
     <div className="card">
       <DataTable<Array<T>>
         value={records}
         lazy
-        filterDisplay="row"
+        // filterDisplay="row"
         dataKey={params.dataKey}
         paginator
-        selectionMode="multiple"
+        /* selectionMode="single" */
         first={lazyState.first}
         rows={10}
         totalRecords={totalRecords}
@@ -115,14 +115,14 @@ export function GenericDataTable<T extends Record<string, any>>(
         sortField={lazyState.sortField}
         sortOrder={lazyState.sortOrder}
         onFilter={onFilter}
-        filters={lazyState.filters}
+        // filters={lazyState.filters}
         loading={loading}
-        selection={selectedRecords}
-        onSelectionChange={onSelectionChange}
+        /* selection={selectedRecords} */
+        /* onSelectionChange={onSelectionChange}
         selectAll={selectAll}
-        onSelectAllChange={onSelectAllChange}
+        onSelectAllChange={onSelectAllChange} */
       >
-        <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
+        {/* <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} /> */}
         {params.columns.map((column) => {
           const c = { ...column };
           if (c.customContent) {

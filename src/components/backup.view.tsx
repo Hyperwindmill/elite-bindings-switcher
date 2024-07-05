@@ -38,15 +38,14 @@ export function BackupView(options: BVInput) {
         {
           field: "name",
           header: "Backup name",
-          sortable: true,
-          filter: true,
-          filterHeader: "Search",
+          sortable: false,
+          filter: false,
         },
         {
           field: "active",
           header: "Active",
-          sortable: true,
-          filter: true,
+          sortable: false,
+          filter: false,
           body: (values: Backup) => {
             return values.active ? (
               <Button label="Active" severity="success"></Button>
