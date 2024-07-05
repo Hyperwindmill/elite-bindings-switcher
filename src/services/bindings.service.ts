@@ -1,8 +1,10 @@
+import { Backup } from "../components/backup.view";
+
 export class BindingsService {
   async loadBackups() {
     //@ts-expect-error because of electron api
     const backups = await window.api.list();
-    return backups as Array<string>;
+    return backups as Backup[];
   }
   async backup(backupName: string) {
     //@ts-expect-error because of electron api

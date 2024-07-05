@@ -2,6 +2,8 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import fs from "fs-extra";
 import dotenv from "dotenv";
+import { Backup } from "./components/backup.view";
+import { Md5 } from "ts-md5";
 dotenv.config();
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
@@ -99,13 +101,36 @@ async function restoreBindings(bindingsPath: string, backupName: string) {
   }
   await fs.copy(sourcePath, bindingsPath);
 }
-
-async function listBackups() {
+function findHash(targetPath: string): string {
+  let hash = "";
+  const files = fs.readdirSync(targetPath);
+  files.forEach((fileName) => {
+    if (path.extname(fileName) === ".binds") {
+      console.log("found file " + fileName + " -> " + path.extname(fileName));
+      hash = Md5.hashStr(
+        fs.readFileSync(path.join(targetPath, fileName), {
+          encoding: "base64",
+        })
+      );
+    }
+  });
+  return hash;
+}
+async function listBackups(bindingsPath?: string): Promise<Backup[]> {
   try {
+    const mainHash = bindingsPath ? findHash(bindingsPath) : "";
+    console.log('MAIN: '+mainHash);
     console.log("Listing backups in", archivePath);
     const backups = await fs.readdir(archivePath);
     console.log("Backups found:", backups);
-    return backups;
+    return backups.map((name) => {
+      const hashCurrent = findHash(path.join(archivePath, name));
+      return {
+        name: name,
+        hash: hashCurrent,
+        active: mainHash && hashCurrent === mainHash,
+      };
+    });
   } catch (error) {
     console.error("Error listing backups:", error);
     throw error;
@@ -140,7 +165,8 @@ ipcMain.handle("restore", async (event, backupName) => {
 
 ipcMain.handle("list", async () => {
   try {
-    const backups = await listBackups();
+    const bindingsPath = await findBindingsPath();
+    const backups = await listBackups(bindingsPath);
     return { success: true, backups };
   } catch (error) {
     return { success: false, message: error.message };

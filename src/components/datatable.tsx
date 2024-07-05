@@ -1,4 +1,4 @@
-import { Column, ColumnProps } from "primereact/column";
+import { Column, ColumnBodyOptions, ColumnProps } from "primereact/column";
 import {
   DataTable,
   DataTableFilterEvent,
@@ -8,7 +8,7 @@ import {
   DataTableSortEvent,
   SortOrder,
 } from "primereact/datatable";
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 interface LazyTableState {
   first: number;
   rows: number;
@@ -23,10 +23,18 @@ interface LoaderFunction<T extends Record<string, any>> {
     result: T[];
   }>;
 }
+
+export interface CustomColumn extends ColumnProps {
+  customContent?: (
+    data: any,
+    options: ColumnBodyOptions,
+    refresh: () => void
+  ) => ReactNode;
+}
 interface DataTableInput<T extends Record<string, any>> {
   loadRecords: LoaderFunction<T>;
   dataKey: string;
-  columns: ColumnProps[];
+  columns: CustomColumn[];
 }
 export function GenericDataTable<T extends Record<string, any>>(
   params: DataTableInput<T>
@@ -115,9 +123,15 @@ export function GenericDataTable<T extends Record<string, any>>(
         onSelectAllChange={onSelectAllChange}
       >
         <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} />
-        {params.columns.map((column) => (
-          <Column {...column} />
-        ))}
+        {params.columns.map((column) => {
+          const c = { ...column };
+          if (c.customContent) {
+            c.body = (data: any, options: ColumnBodyOptions) => {
+              return c.customContent(data, options, loadLazyData);
+            };
+          }
+          return <Column {...c} />;
+        })}
       </DataTable>
     </div>
   );
