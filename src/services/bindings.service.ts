@@ -6,6 +6,10 @@ export class BindingsService {
     const backups = await window.api.list();
     return backups as Backup[];
   }
+  async saveSteamPath(steamPath:string){
+    //@ts-expect-error because of electron api
+    window.api.setSteamPath(steamPath);
+  }
   async backup(backupName: string) {
     //@ts-expect-error because of electron api
     const result = await window.api.backup(backupName);

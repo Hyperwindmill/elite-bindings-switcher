@@ -2,6 +2,8 @@ import { ColumnBodyOptions } from "primereact/column";
 import { BindingsService } from "../services/bindings.service";
 import { GenericDataTable } from "./datatable";
 import { Button } from "primereact/button";
+import { useState } from "react";
+import { FileUpload } from "primereact/fileupload";
 interface BVInput {
   service: BindingsService;
 }
@@ -12,12 +14,17 @@ export interface Backup {
   active: boolean;
 }
 export function BackupView(options: BVInput) {
+  const [missingPath, setMissingPath] = useState<boolean>(false);
   const loadBackups = async (page: number, rows: number) => {
-    const bk = await options.service.loadBackups();
-    return {
-      totalRecords: bk.length,
-      result: bk,
-    };
+    try {
+      const bk = await options.service.loadBackups();
+      return {
+        totalRecords: bk.length,
+        result: bk,
+      };
+    } catch (e) {
+      setMissingPath(true);
+    }
   };
   const restoreBackup = (backup: string, finalStep?: () => void) => {
     options.service
@@ -30,7 +37,22 @@ export function BackupView(options: BVInput) {
       })
       .finally(finalStep);
   };
-  return (
+  return missingPath ? (
+    <FileUpload
+      accept="webkitdirectory"
+      multiple={false}
+      chooseLabel="Select your Steam directory"
+      mode="basic"
+      auto
+      customUpload
+      uploadHandler={(e) => {
+        const path = e.files[0].path;
+        options.service.saveSteamPath(path).then(() => {
+          setMissingPath(false);
+        });
+      }}
+    ></FileUpload>
+  ) : (
     <GenericDataTable<Backup>
       loadRecords={loadBackups}
       dataKey="name"
