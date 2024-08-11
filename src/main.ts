@@ -1,25 +1,29 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import fs from "fs-extra";
-import dotenv from "dotenv";
 import { Backup } from "./components/backup.view";
 import { Md5 } from "ts-md5";
-dotenv.config();
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
-const steamPath = path.join(process.env.STEAM_PATH, "compatdata");
 const archivePath = path.join(
-  process.env.HOME,
+  process.env.HOME ||
+    path.join(process.env.APPDATA, "EliteDangerousBindingsSwitcher"),
   "elite_dangerous_bindings_backup"
 );
-
-if (!process.env.STEAM_PATH) {
-  console.error("Error: STEAM_PATH environment variable is not set.");
-  process.exit(1);
-}
+const settingsPath = path.join(archivePath, "settings.json");
+const getSteamPath = () => {
+  if (fs.existsSync(settingsPath)) {
+    const settings = JSON.parse(fs.readFileSync(settingsPath, "utf8"));
+    return settings.steamPath ?? "";
+  }
+  return "";
+};
+const saveSteamPath = (steamPath: string) => {
+  fs.writeFileSync(settingsPath, JSON.stringify({ steamPath: steamPath }));
+};
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -64,34 +68,53 @@ app.on("activate", () => {
   }
 });
 
-async function findBindingsPath() {
-  const candidates = await fs.readdir(steamPath);
-  for (const candidate of candidates) {
-    const bindingsPath = path.join(
-      steamPath,
-      candidate,
-      "pfx",
-      "drive_c",
-      "users",
-      "steamuser",
-      "AppData",
+function findBindingsPath() {
+  let bindingsPath = "";
+  if (process.platform === "win32") {
+    bindingsPath = path.join(
+      process.env.APPDATA,
+      "..",
       "Local",
       "Frontier Developments",
       "Elite Dangerous",
       "Options",
       "Bindings"
     );
-    if (await fs.pathExists(bindingsPath)) {
-      return bindingsPath;
+  } else {
+    const stp = getSteamPath();
+    if (!stp) return "";
+    const steamPath = path.join(stp, "compatdata");
+    const candidates = fs.readdirSync(steamPath);
+    for (const candidate of candidates) {
+      bindingsPath = path.join(
+        steamPath,
+        candidate,
+        "pfx",
+        "drive_c",
+        "users",
+        "steamuser",
+        "AppData",
+        "Local",
+        "Frontier Developments",
+        "Elite Dangerous",
+        "Options",
+        "Bindings"
+      );
     }
   }
-  throw new Error("Bindings directory not found.");
+  if (fs.pathExistsSync(bindingsPath)) {
+    return bindingsPath;
+  }
+  return "";
 }
 
 async function backupBindings(bindingsPath: string, backupName: string) {
   const targetPath = path.join(archivePath, backupName);
   await fs.ensureDir(targetPath);
   await fs.copy(bindingsPath, targetPath);
+}
+async function setSteamPath(steamPath: string) {
+  saveSteamPath(steamPath);
 }
 
 async function restoreBindings(bindingsPath: string, backupName: string) {
@@ -119,7 +142,7 @@ function findHash(targetPath: string): string {
 async function listBackups(bindingsPath?: string): Promise<Backup[]> {
   try {
     const mainHash = bindingsPath ? findHash(bindingsPath) : "";
-    console.log('MAIN: '+mainHash);
+    console.log("MAIN: " + mainHash);
     console.log("Listing backups in", archivePath);
     const backups = await fs.readdir(archivePath);
     console.log("Backups found:", backups);
@@ -138,8 +161,9 @@ async function listBackups(bindingsPath?: string): Promise<Backup[]> {
 }
 
 ipcMain.handle("backup", async (event, backupName) => {
+  const bindingsPath = findBindingsPath();
   try {
-    const bindingsPath = await findBindingsPath();
+    if (!bindingsPath) throw new Error("No path");
     console.log(
       "Backing up current bindings from " + bindingsPath + " to " + backupName
     );
@@ -151,8 +175,9 @@ ipcMain.handle("backup", async (event, backupName) => {
 });
 
 ipcMain.handle("restore", async (event, backupName) => {
+  const bindingsPath = findBindingsPath();
   try {
-    const bindingsPath = await findBindingsPath();
+    if (!bindingsPath) throw new Error("No path");
     console.log(
       "Restoring bindings from " + backupName + " to " + bindingsPath
     );
@@ -162,10 +187,14 @@ ipcMain.handle("restore", async (event, backupName) => {
     return { success: false, message: error.message };
   }
 });
+ipcMain.handle("steamPath", (event, steamPath) => {
+  setSteamPath(steamPath);
+});
 
 ipcMain.handle("list", async () => {
   try {
-    const bindingsPath = await findBindingsPath();
+    const bindingsPath = findBindingsPath();
+    if (!bindingsPath) throw new Error("No path");
     const backups = await listBackups(bindingsPath);
     return { success: true, backups };
   } catch (error) {
