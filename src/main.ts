@@ -144,7 +144,10 @@ async function listBackups(bindingsPath?: string): Promise<Backup[]> {
     const mainHash = bindingsPath ? findHash(bindingsPath) : "";
     console.log("MAIN: " + mainHash);
     console.log("Listing backups in", archivePath);
-    const backups = await fs.readdir(archivePath);
+    let backups = await fs.readdir(archivePath);
+    backups = backups.filter((e) => {
+      return e !== "settings.json";
+    });
     console.log("Backups found:", backups);
     return backups.map((name) => {
       const hashCurrent = findHash(path.join(archivePath, name));

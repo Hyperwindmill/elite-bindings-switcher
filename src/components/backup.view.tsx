@@ -4,6 +4,7 @@ import { GenericDataTable } from "./datatable";
 import { Button } from "primereact/button";
 import { useState } from "react";
 import { FileUpload } from "primereact/fileupload";
+import { InputText } from "primereact/inputtext";
 interface BVInput {
   service: BindingsService;
 }
@@ -15,6 +16,7 @@ export interface Backup {
 }
 export function BackupView(options: BVInput) {
   const [missingPath, setMissingPath] = useState<boolean>(false);
+  const [manualPath, setManualPath] = useState<string>("");
   const loadBackups = async (page: number, rows: number) => {
     try {
       const bk = await options.service.loadBackups();
@@ -38,20 +40,36 @@ export function BackupView(options: BVInput) {
       .finally(finalStep);
   };
   return missingPath ? (
-    <FileUpload
-      accept="webkitdirectory"
-      multiple={false}
-      chooseLabel="Select your Steam directory"
-      mode="basic"
-      auto
-      customUpload
-      uploadHandler={(e) => {
-        const path = e.files[0].path;
-        options.service.saveSteamPath(path).then(() => {
-          setMissingPath(false);
-        });
-      }}
-    ></FileUpload>
+    <div>
+      <FileUpload
+        accept="webkitdirectory"
+        multiple={false}
+        chooseLabel="Select your Steam directory"
+        mode="basic"
+        auto
+        customUpload
+        uploadHandler={(e) => {
+          const path = e.files[0].path;
+          options.service.saveSteamPath(path).then(() => {
+            setMissingPath(false);
+          });
+        }}
+      ></FileUpload>
+      <InputText
+        value={manualPath}
+        onChange={(e) => {
+          setManualPath(e.target.value);
+        }}
+      ></InputText>
+      <Button
+        label="Enter manually"
+        onClick={() => {
+          options.service.saveSteamPath(manualPath).then(() => {
+            setMissingPath(false);
+          });
+        }}
+      ></Button>
+    </div>
   ) : (
     <GenericDataTable<Backup>
       loadRecords={loadBackups}
