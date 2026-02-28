@@ -2,7 +2,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
 import fs from "fs-extra";
 import { Backup } from "./types";
-import { Md5 } from "ts-md5";
+import crypto from "crypto";
 
 if (require("electron-squirrel-startup")) {
   app.quit();
@@ -101,14 +101,16 @@ function findBindingsPath(): string {
 }
 
 function findHash(targetPath: string): string {
-  for (const fileName of fs.readdirSync(targetPath)) {
-    if (path.extname(fileName) === ".binds") {
-      return Md5.hashStr(
-        fs.readFileSync(path.join(targetPath, fileName), { encoding: "base64" })
-      );
-    }
+  const bindsFiles = fs.readdirSync(targetPath)
+    .filter((f) => path.extname(f) === ".binds")
+    .sort();
+  if (bindsFiles.length === 0) return "";
+  const hash = crypto.createHash("md5");
+  for (const fileName of bindsFiles) {
+    hash.update(fileName); // include filename so renamed files change the hash
+    hash.update(fs.readFileSync(path.join(targetPath, fileName)));
   }
-  return "";
+  return hash.digest("hex");
 }
 
 async function backupBindings(bindingsPath: string, backupName: string) {
@@ -121,6 +123,12 @@ async function restoreBindings(bindingsPath: string, backupName: string) {
   const sourcePath = path.join(archivePath, backupName);
   if (!(await fs.pathExists(sourcePath))) {
     throw new Error(`Backup '${backupName}' does not exist.`);
+  }
+  // Remove existing .binds files before restoring to avoid stale files from previous profiles
+  for (const file of await fs.readdir(bindingsPath)) {
+    if (path.extname(file) === ".binds") {
+      await fs.remove(path.join(bindingsPath, file));
+    }
   }
   await fs.copy(sourcePath, bindingsPath);
 }
