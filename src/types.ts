@@ -6,6 +6,7 @@ export interface Backup {
 }
 
 interface EliteApi {
+  platform: string;
   backup(name: string): Promise<{ success: boolean; message?: string }>;
   restore(name: string): Promise<{ success: boolean; message?: string }>;
   setSteamPath(path: string): Promise<void>;

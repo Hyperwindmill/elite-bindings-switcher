@@ -1,15 +1,11 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import path from "path";
+import os from "os";
 import fs from "fs-extra";
 import { Backup } from "./types";
 import crypto from "crypto";
 
-
-const archivePath = path.join(
-  process.env.HOME ||
-    path.join(process.env.APPDATA, "EliteDangerousBindingsSwitcher"),
-  "elite_dangerous_bindings_backup"
-);
+const archivePath = path.join(os.homedir(), "elite_dangerous_bindings_backup");
 const settingsPath = path.join(archivePath, "settings.json");
 
 const getSteamPath = () => {
@@ -58,6 +54,7 @@ app.on("activate", () => {
 
 function findBindingsPath(): string {
   if (process.platform === "win32") {
+    if (!process.env.APPDATA) return "";
     const bindingsPath = path.join(
       process.env.APPDATA,
       "..",

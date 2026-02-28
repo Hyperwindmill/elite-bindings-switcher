@@ -7,7 +7,17 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact-name: linux
+            artifact-glob: '**/*.AppImage'
+          - os: windows-latest
+            artifact-name: windows
+            artifact-glob: '**/*.exe'
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - uses: actions/checkout@v4
@@ -20,10 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install system dependencies for AppImage
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libfuse2 file
 
-      - name: Build AppImage
+      - name: Build
         run: npm run make
         env:
           APPIMAGE_EXTRACT_AND_RUN: 1
@@ -31,11 +42,20 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: elite-bindings-switcher-linux
-          path: out/make/**/*.AppImage
+          name: elite-bindings-switcher-${{ matrix.artifact-name }}
+          path: out/make/${{ matrix.artifact-glob }}
 
-      - name: Create release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/download-artifact@v4
         with:
-          files: out/make/**/*.AppImage
+          merge-multiple: true
+          path: artifacts
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**

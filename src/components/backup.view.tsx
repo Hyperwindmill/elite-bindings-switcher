@@ -44,9 +44,17 @@ export function BackupView({ service }: BVInput) {
   };
 
   if (missingPath) {
+    if (window.api.platform === "win32") {
+      return (
+        <div className="flex flex-column gap-2 p-3">
+          <p>Elite Dangerous bindings folder not found.</p>
+          <p>Make sure Elite Dangerous is installed and has been launched at least once.</p>
+        </div>
+      );
+    }
     return (
       <div className="flex flex-column gap-2 p-3">
-        <label>Enter your Steam directory path:</label>
+        <label>Enter your Steam library path (the folder containing &quot;steamapps&quot;):</label>
         <div className="flex gap-2">
           <InputText
             value={manualPath}
