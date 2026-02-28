@@ -1,7 +1,7 @@
 {
   "name": "elite-bindings-switcher",
   "productName": "elite-bindings-switcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "My Electron application description",
   "main": ".vite/build/main.js",
   "scripts": {
@@ -42,6 +42,7 @@
   "license": "MIT",
   "dependencies": {
     "dotenv": "^17.3.1",
+    "electron-squirrel-startup": "^1.0.1",
     "primeflex": "^4.0.0",
     "primereact": "^10.9.7",
     "react": "^19.2.4",

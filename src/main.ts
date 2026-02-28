@@ -5,6 +5,11 @@ import fs from "fs-extra";
 import { Backup } from "./types";
 import crypto from "crypto";
 
+// Handle Squirrel.Windows install/update/uninstall events (creates Start Menu shortcuts etc.)
+if (process.platform === "win32" && require("electron-squirrel-startup")) {
+  app.quit();
+}
+
 const archivePath = path.join(os.homedir(), "elite_dangerous_bindings_backup");
 const settingsPath = path.join(archivePath, "settings.json");
 
