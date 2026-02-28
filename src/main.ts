@@ -4,9 +4,6 @@ import fs from "fs-extra";
 import { Backup } from "./types";
 import crypto from "crypto";
 
-if (require("electron-squirrel-startup")) {
-  app.quit();
-}
 
 const archivePath = path.join(
   process.env.HOME ||
