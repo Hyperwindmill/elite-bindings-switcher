@@ -15,7 +15,7 @@ jobs:
             artifact-glob: '**/*.AppImage'
           - os: windows-latest
             artifact-name: windows
-            artifact-glob: '**/*.exe'
+            artifact-glob: '**/*.zip'
 
     runs-on: ${{ matrix.os }}
 
