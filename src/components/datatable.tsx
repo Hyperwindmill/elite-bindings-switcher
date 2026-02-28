@@ -1,22 +1,20 @@
 import { Column, ColumnBodyOptions, ColumnProps } from "primereact/column";
 import {
   DataTable,
-  DataTableFilterEvent,
-  DataTableFilterMeta,
   DataTablePageEvent,
-  DataTableSelectAllChangeEvent,
   DataTableSortEvent,
   SortOrder,
 } from "primereact/datatable";
 import { ReactNode, useEffect, useState } from "react";
+
 interface LazyTableState {
   first: number;
   rows: number;
   page?: number;
   sortField?: string;
   sortOrder?: SortOrder;
-  // filters?: DataTableFilterMeta;
 }
+
 interface LoaderFunction<T extends Record<string, any>> {
   (page: number, rows: number): Promise<{
     totalRecords: number;
@@ -31,27 +29,25 @@ export interface CustomColumn extends ColumnProps {
     refresh: () => void
   ) => ReactNode;
 }
+
 interface DataTableInput<T extends Record<string, any>> {
   loadRecords: LoaderFunction<T>;
   dataKey: string;
   columns: CustomColumn[];
 }
+
 export function GenericDataTable<T extends Record<string, any>>(
   params: DataTableInput<T>
 ) {
   const [loading, setLoading] = useState<boolean>(false);
   const [totalRecords, setTotalRecords] = useState<number>(0);
-  // const [selectAll, setSelectAll] = useState<boolean>(false);
-  const [records, setRecords] = useState<T[]>(null);
-  // const [selectedRecords, setSelectedRecords] = useState<T[] | null>(null);
-  const [lazyState, setlazyState] = useState<LazyTableState>({
+  const [records, setRecords] = useState<T[]>([]);
+  const [lazyState, setLazyState] = useState<LazyTableState>({
     first: 0,
     rows: 10,
     page: 1,
-    sortField: null,
-    sortOrder: null,
-    // filters: null,
   });
+
   useEffect(() => {
     loadLazyData();
   }, [lazyState]);
@@ -59,54 +55,27 @@ export function GenericDataTable<T extends Record<string, any>>(
   const loadLazyData = () => {
     setLoading(true);
     params.loadRecords(lazyState.page, lazyState.rows).then((result) => {
-      console.log(result);
       setTotalRecords(result.totalRecords);
       setRecords(result.result);
       setLoading(false);
     });
   };
+
   const onPage = (event: DataTablePageEvent) => {
-    setlazyState({ ...lazyState, ...event });
+    setLazyState({ ...lazyState, ...event });
   };
 
   const onSort = (event: DataTableSortEvent) => {
-    setlazyState({ ...lazyState, ...event });
+    setLazyState({ ...lazyState, ...event });
   };
-
-  const onFilter = (event: DataTableFilterEvent) => {
-    event["first"] = 0;
-    setlazyState({ ...lazyState, ...event });
-  };
-
-  /* const onSelectionChange = (event: any) => {
-    const value = event.value;
-    setSelectedRecords(value);
-    setSelectAll(value.length === totalRecords);
-  };
-
-  const onSelectAllChange = (event: DataTableSelectAllChangeEvent) => {
-    const selectAll = event.checked;
-
-    if (selectAll) {
-      params.loadRecords(0, 0).then((data) => {
-        setSelectAll(true);
-        setSelectedRecords(data.result);
-      });
-    } else {
-      setSelectAll(false);
-      setSelectedRecords([]);
-    }
-  }; */
 
   return (
     <div className="card">
       <DataTable<Array<T>>
         value={records}
         lazy
-        // filterDisplay="row"
         dataKey={params.dataKey}
         paginator
-        /* selectionMode="single" */
         first={lazyState.first}
         rows={10}
         totalRecords={totalRecords}
@@ -114,23 +83,15 @@ export function GenericDataTable<T extends Record<string, any>>(
         onSort={onSort}
         sortField={lazyState.sortField}
         sortOrder={lazyState.sortOrder}
-        onFilter={onFilter}
-        // filters={lazyState.filters}
         loading={loading}
-        /* selection={selectedRecords} */
-        /* onSelectionChange={onSelectionChange}
-        selectAll={selectAll}
-        onSelectAllChange={onSelectAllChange} */
       >
-        {/* <Column selectionMode="multiple" headerStyle={{ width: "3rem" }} /> */}
-        {params.columns.map((column) => {
+        {params.columns.map((column, index) => {
           const c = { ...column };
           if (c.customContent) {
-            c.body = (data: any, options: ColumnBodyOptions) => {
-              return c.customContent(data, options, loadLazyData);
-            };
+            c.body = (data: any, options: ColumnBodyOptions) =>
+              c.customContent(data, options, loadLazyData);
           }
-          return <Column {...c} />;
+          return <Column key={index} {...c} />;
         })}
       </DataTable>
     </div>

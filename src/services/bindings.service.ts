@@ -1,31 +1,23 @@
-import { Backup } from "../components/backup.view";
+import { Backup } from "../types";
 
 export class BindingsService {
-  async loadBackups() {
-    //@ts-expect-error because of electron api
-    const backups = await window.api.list();
-    return backups as Backup[];
+  async loadBackups(): Promise<Backup[]> {
+    return window.api.list();
   }
-  async saveSteamPath(steamPath:string){
-    //@ts-expect-error because of electron api
-    window.api.setSteamPath(steamPath);
+
+  async saveSteamPath(steamPath: string): Promise<void> {
+    return window.api.setSteamPath(steamPath);
   }
-  async backup(backupName: string) {
-    //@ts-expect-error because of electron api
+
+  async backup(backupName: string): Promise<boolean> {
     const result = await window.api.backup(backupName);
-    if (result.success) {
-      return true;
-    } else {
-      throw result.message;
-    }
+    if (result.success) return true;
+    throw new Error(result.message);
   }
-  async restore(backupName: string) {
-    //@ts-expect-error because of electron api
+
+  async restore(backupName: string): Promise<boolean> {
     const result = await window.api.restore(backupName);
-    if (result.success) {
-      return true;
-    } else {
-      throw result.message;
-    }
+    if (result.success) return true;
+    throw new Error(result.message);
   }
 }
