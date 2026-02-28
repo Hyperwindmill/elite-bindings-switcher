@@ -5,9 +5,18 @@ import fs from "fs-extra";
 import { Backup } from "./types";
 import crypto from "crypto";
 
-// Handle Squirrel.Windows install/update/uninstall events (creates Start Menu shortcuts etc.)
-if (process.platform === "win32" && require("electron-squirrel-startup")) {
-  app.quit();
+// Handle Squirrel.Windows install/update/uninstall events
+// Prevents the app window from flashing during install/uninstall
+if (process.platform === "win32") {
+  const squirrelCommand = process.argv[1];
+  if (
+    squirrelCommand === "--squirrel-install" ||
+    squirrelCommand === "--squirrel-updated" ||
+    squirrelCommand === "--squirrel-uninstall" ||
+    squirrelCommand === "--squirrel-obsolete"
+  ) {
+    app.quit();
+  }
 }
 
 const archivePath = path.join(os.homedir(), "elite_dangerous_bindings_backup");
